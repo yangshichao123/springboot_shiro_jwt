@@ -1,23 +1,87 @@
 package com.usthe.bootshiro.shiro.filter;
 
+import com.alibaba.fastjson.JSON;
+import com.usthe.bootshiro.domain.vo.Message;
+import com.usthe.bootshiro.util.RequestResponseUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.PathMatchingFilter;
 import org.apache.shiro.web.util.WebUtils;
+
+import javax.servlet.Filter;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import java.util.Iterator;
+import java.util.Set;
+
+import static org.apache.shiro.util.StringUtils.split;
 
 /**
  *   重写过滤链路径匹配规则，增加REST风格post,get.delete,put..支持
  * @author tomsun28
  * @date 23:37 2018/4/19
  */
+@Slf4j
 public abstract class AbstractPathMatchingFilter extends PathMatchingFilter {
 
     private static final String DEFAULT_PATH_SEPARATOR = "/";
 
     public AbstractPathMatchingFilter() {
 
+    }
+
+    public void appliedPathsClaer() {
+        this.appliedPaths.clear();
+    }
+
+    @Override
+    protected boolean preHandle(ServletRequest request, ServletResponse response) throws Exception {
+
+        if (this.appliedPaths != null && !this.appliedPaths.isEmpty()) {
+
+            Set<String> strings = this.appliedPaths.keySet();
+
+            Iterator var3 = strings.iterator();
+
+            String path;
+
+            do {
+                if (!var3.hasNext()) {
+                    // 其他的判断为JWT错误无效
+                    Message message = new Message().error(1007,"没有匹配url");
+                    RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
+                    return false;
+                }
+
+                path = (String)var3.next();
+            } while(!this.pathsMatch(path, request));
+
+            log.trace("Current requestURI matches pattern '{}'.  Determining filter chain execution...", path);
+            Object config = this.appliedPaths.get(path);
+            return this.isFilterChainContinued(request, response, path, config);
+        } else {
+            if (log.isTraceEnabled()) {
+                log.trace("appliedPaths property is null or empty.  This Filter will passthrough immediately.");
+            }
+
+            return true;
+        }
+    }
+    private boolean isFilterChainContinued(ServletRequest request, ServletResponse response, String path, Object pathConfig) throws Exception {
+        if (this.isEnabled(request, response, path, pathConfig)) {
+            if (log.isTraceEnabled()) {
+                log.trace("Filter '{}' is enabled for the current request under path '{}' with config [{}].  Delegating to subclass implementation for 'onPreHandle' check.", new Object[]{this.getName(), path, pathConfig});
+            }
+
+            return this.onPreHandle(request, response, pathConfig);
+        } else {
+            if (log.isTraceEnabled()) {
+                log.trace("Filter '{}' is disabled for the current request under path '{}' with config [{}].  The next element in the FilterChain will be called immediately.", new Object[]{this.getName(), path, pathConfig});
+            }
+
+            return true;
+        }
     }
 
     /**

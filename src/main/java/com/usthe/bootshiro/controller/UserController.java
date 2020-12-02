@@ -62,6 +62,15 @@ public class UserController extends BaseAction {
         return new Message().ok(6666,"return user list success").addData("pageInfo",pageInfo);
     }
 
+    @ApiOperation(value = "获取用户列表",notes = "GET获取所有注册用户的信息列表")
+    @GetMapping("/list")
+    public Message getUserList() {
+
+        List<AuthUser> authUsers = userService.getUserList();
+        authUsers.forEach(user->user.setPassword(null));
+        return new Message().ok(6666,"return user list success").addData("userList",authUsers);
+    }
+
     @ApiOperation(value = "给用户授权添加角色",httpMethod = "POST")
     @PostMapping("/authority/role")
     public Message authorityUserRole(HttpServletRequest request) {

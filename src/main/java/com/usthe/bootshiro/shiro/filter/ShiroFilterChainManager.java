@@ -7,6 +7,7 @@ import com.usthe.bootshiro.shiro.provider.ShiroFilterRulesProvider;
 import com.usthe.bootshiro.shiro.rule.RolePermRule;
 import com.usthe.bootshiro.support.SpringContextHolder;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.filter.PathConfigProcessor;
 import org.apache.shiro.web.filter.mgt.DefaultFilterChainManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
 import org.slf4j.Logger;
@@ -100,6 +101,16 @@ public class ShiroFilterChainManager {
                 RestPathMatchingFilterChainResolver filterChainResolver = (RestPathMatchingFilterChainResolver)abstractShiroFilter.getFilterChainResolver();
                 DefaultFilterChainManager filterChainManager = (DefaultFilterChainManager)filterChainResolver.getFilterChainManager();
                 filterChainManager.getFilterChains().clear();
+                filterChainManager.getFilters().forEach((k,v)->{
+                    if(v instanceof BonJwtFilter){
+                        BonJwtFilter bonJwtFilter=(BonJwtFilter)v;
+                        bonJwtFilter.appliedPathsClaer();
+                    }else if(v instanceof  PasswordFilter){
+                        PasswordFilter passwordFilter =(PasswordFilter)v;
+                        passwordFilter.appliedPathsClaer();
+                    }
+
+                });
                 shiroFilterFactoryBean.getFilterChainDefinitionMap().clear();
                 shiroFilterFactoryBean.setFilterChainDefinitionMap(this.initGetFilterChain());
                 shiroFilterFactoryBean.getFilterChainDefinitionMap().forEach((k,v) -> filterChainManager.createChain(k,v));

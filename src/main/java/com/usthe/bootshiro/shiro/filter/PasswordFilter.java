@@ -43,6 +43,10 @@ public class PasswordFilter extends AccessControlFilter {
         //  拒绝，统一交给 onAccessDenied 处理
         return null != subject && subject.isAuthenticated();
     }
+    public void appliedPathsClaer() {
+        this.appliedPaths.clear();
+    }
+
 
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) {

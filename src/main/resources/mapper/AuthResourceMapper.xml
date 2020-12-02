@@ -162,9 +162,10 @@
     from auth_resource re
     LEFT JOIN auth_role_resource ro on re.id = ro.RESOURCE_ID
     LEFT JOIN auth_role rol on ro.ROLE_ID = rol.ID
-    where re.type = 2
+    where re.type = 2 and re.STATUS =1
     GROUP BY
     re.URI,re.ID
+    ORDER BY re.URI desc
   </select>
 
     <select id="selectAuthorityMenusByUid" parameterType="java.lang.String" resultMap="BaseResultMap">
